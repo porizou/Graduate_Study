@@ -53,8 +53,6 @@ int main() {
 
 		slave.write(distance, 2); led = 1;
 
-		//pc.printf("front:%d,back:%d\r\n",distance[0],distance[1]);
-
 		ping.Send();
 		wait_ms(30);
 

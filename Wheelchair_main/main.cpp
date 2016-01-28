@@ -62,7 +62,7 @@ int main() {
 	//Thread can_thread(CAN_Thread, NULL, osPriorityNormal);
 	Thread spi_thread(SPI_Thread, NULL, osPriorityNormal);  //CAN通信が安定しないため,SPI通信に変更
 
-	//Thread sd_thread(SD_Thread, NULL, osPriorityNormal, (DEFAULT_STACK_SIZE * 2.5));
+	sd_thread(SD_Thread, NULL, osPriorityNormal, (DEFAULT_STACK_SIZE * 2.5));
 
 // Priority of Thread (RtosTimer is osPriorityAboveNormal)
 //  osPriorityIdle          = -3,          ///< priority: idle (lowest)--> then, mbed ERROR!!
