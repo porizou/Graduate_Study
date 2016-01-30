@@ -22,7 +22,8 @@
     usingFeedForward = 0;
     usingIncompleteDifferential = 0;
 
-    prevDiffError = 0.0;
+    prevDiffOut = 0.0;
+    u_ = 0.0;
  }
 
  void PID::setInputLimits(float inMin, float inMax){
@@ -48,8 +49,8 @@
     usingFeedForward = 1;
  }
 
- void PID::setIncompleteDifferential(float lpf) {
-    LPF = lpf;
+ void PID::setIncompleteDifferential(float u) {
+    u_ = u;
     usingIncompleteDifferential = 1;
  }
 
@@ -68,21 +69,9 @@ void PID::setGain(float Kp, float Ki, float Kd) {
  float PID::compute(){
 
     //現在値と目標値の値を0~100%の範囲に置き換える
-    float scaledPV = (processVariable_ - inMin_) / inSpan_;
+    float scaledPV = scaledParcent((processVariable_ - inMin_) / inSpan_);
 
-    if(scaledPV > 1.0){
-        scaledPV = 1.0;
-    } else if(scaledPV < 0.0){
-        scaledPV = 0.0;
-    }
-
-    float scaledSP = (setPoint_ - inMin_) / inSpan_;
-
-    if (scaledSP > 1.0){
-        scaledSP = 1.0;
-    } else if(scaledSP < 0.0){
-        scaledSP = 0.0;
-    }
+    float scaledSP = scaledParcent((setPoint_ - inMin_) / inSpan_);
 
     //偏差の計算
     Error_= scaledSP - scaledPV;
@@ -92,32 +81,60 @@ void PID::setGain(float Kp, float Ki, float Kd) {
         accError_ += (Error_ + prevError_) / 2.0 * tSample_; //偏差の積分値の計算
     }
 
-    //偏差の微分値の計算
-    float diffError = (Error_ - prevError_) / tSample_;
+    //偏差の微分値の計算(不完全微分が有効な場合,偏差の不完全微分値を計算)
+    float diffError = usingIncompleteDifferential ? calcIncompleteDifferential() : (Error_ - prevError_) / tSample_;
     
-    //不完全微分が有効な場合,偏差の微分値をLPFに通す
-    if(usingIncompleteDifferential) { 
-        diffError = (LPF * prevDiffError) + (diffError * (1.0 - LPF));
-        prevDiffError = diffError;
-    }
-
     //フィードフォワード制御が有効な場合,バイアス値の計算
     float scaledBias = usingFeedForward ? (Bias_ - outMin_) / outSpan_ : 0.0;
 
     //PIDの計算
-    controllerOutput_ = scaledBias + Kp_ * Error_ + Ki_ * accError_ + Kd_ * diffError; 
+    controllerOutput_ = scaledParcent(scaledBias + Kp_ * Error_ + Ki_ * accError_ + Kd_ * diffError); 
 
-    if (controllerOutput_ < 0.0) {
-        controllerOutput_ = 0.0;
-    } else if (controllerOutput_ > 1.0) {
-        controllerOutput_ = 1.0;
-    }
     //出力の値,偏差の値を更新
     prevControllerOutput_ = controllerOutput_;
     prevError_ = Error_;
+    //微分項の値を更新
+    prevDiffOut = Kd_ * diffError;
     //PIDの出力を実際の値に変換して返す
     return ((controllerOutput_ * outSpan_) + outMin_);
 
+ }
+
+ float PID::scaledParcent(float value) {
+
+    if(value > 1.0) {
+        return 1.0;
+    } else if(value < 0.0) {
+        return 0.0;
+    }
+    else return value;
+ }
+
+ /**
+ * 不完全微分の式
+ *
+ * 伝達関数
+ * Yn = (Td*s / (1 + k*Td*s)) * E
+ *
+ * 差分の式
+ * yn = (k*Td / (Δt + k*Td)) * yn-1 + (Td / (Δt + k*Td))*(en - en-1)
+ *
+ * Δt   制御周期
+ * k    定数
+ * Td   微分ゲイン
+ * yn   現在の出力
+ * yn-1 前回の出力
+ * en   現在の偏差
+ * en-1 前回の偏差
+ * 
+ * 参考文献 http://www.nikko-pb.co.jp/products/k_data/P12_13.pdf
+ */
+
+ float PID::calcIncompleteDifferential(void) {
+
+    float k = 1 / (tSample_ + u_ * Kd_);
+
+    return (k * u_ * prevDiffOut) + (k * (Error_ - prevError_));
  }
 
 

@@ -39,23 +39,24 @@
 
     void setBias(float Bias); //フィードフォワード制御有効　バイアス値の設定
 
-    void setIncompleteDifferential(float lpf); //不完全微分有効,１次LPF係数の設定
+    void setIncompleteDifferential(float u); //不完全微分(実用微分)有効,１次LPF係数の設定
 
     float compute(void); //PIDの計算　戻り値はoutMinからoutMaxの範囲
+    float scaledParcent(float value);
+
+    float calcIncompleteDifferential(void);
 
  private:
     bool usingFeedForward; //フィードフォワード制御有効フラグ
     bool usingIncompleteDifferential; //不完全微分有効フラグ
 
     //PIDゲイン
-    float Kp_;
-    float Ki_;
-    float Kd_;
-
+    float Kp_, Ki_, Kd_;
+ 
     float setPoint_; //目標値
 
-    float     controllerOutput_; //出力値
-    float prevControllerOutput_; //前回の出力値
+    float     controllerOutput_; //出力値(0.0~1.0)
+    float prevControllerOutput_; //前回の出力値(0.0~1.0)
 
     float  inMin_,  inMax_,  inSpan_; //入力の最小値,最大値,範囲
     float outMin_, outMax_, outSpan_; //出力の最小値,最大値,範囲
@@ -70,9 +71,10 @@
     float Bias_; //フィードフォワード制御バイアス値
 
     float processVariable_; //入力値
-    float prevDiffError; //前回の偏差の微分値
 
-    float LPF; //不完全微分LPF係数
+    float prevDiffOut; //前回の微分項の出力
+
+    float u_; //不完全微分LPF係数(0.0~1.0)
 
  };
 
