@@ -102,7 +102,7 @@ void SD_Thread(void const *sdcard) {
 		timer.start();
 
 		float Dist = sideDistance;
-		fprintf(fp, "%0.3lf, %0.3f, %0.3f, %0.3f, %0.3f, %0.3f, %0.3f, %d\n",
+		fprintf(fp, "%0.3lf, %0.3f, %0.3f, %0.3f, %0.3f, %0.3f, %d\n",
 				t, Angle, imu.heading, motorR, motorL, Dist, MovingDistance);
 		Thread::wait(100);
 		timer.stop();

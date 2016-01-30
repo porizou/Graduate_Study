@@ -62,7 +62,7 @@ int main() {
 	//Thread can_thread(CAN_Thread, NULL, osPriorityNormal);
 	Thread spi_thread(SPI_Thread, NULL, osPriorityNormal);  //CAN通信が安定しないため,SPI通信に変更
 
-	sd_thread(SD_Thread, NULL, osPriorityNormal, (DEFAULT_STACK_SIZE * 2.5));
+	Thread sd_thread(SD_Thread, NULL, osPriorityNormal, (DEFAULT_STACK_SIZE * 2.5));
 
 // Priority of Thread (RtosTimer is osPriorityAboveNormal)
 //  osPriorityIdle          = -3,          ///< priority: idle (lowest)--> then, mbed ERROR!!
@@ -112,7 +112,7 @@ bool SW_ON(int n) {
 }
 
 bool isDetectFrontObject(float distance) {
-	return distance <= FRONT_AREA ? 1 : 0;
+	return (FRONT_AREA-5 <= distance || distance <= FRONT_AREA) ? 1 : 0;
 }
 
 inline void controll_reset(void) {
